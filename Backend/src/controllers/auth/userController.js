@@ -114,3 +114,11 @@ export const loginUser = asyncHandler(async (request, response) => {
       .json({ message: "Login failed!! Invalid credentials!!" });
   }
 });
+
+//LOGOUT USER
+export const logoutUser = asyncHandler(async (request, response) => {
+  response.clearCookie("token");
+  response.status(201).json({
+    message: "User logged out successfully!!",
+  });
+});
