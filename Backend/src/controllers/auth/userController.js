@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import User from "../../models/auth/userModel.js";
 import generateToken from "../../helpers/generateToke.js";
 import bcrypt from "bcrypt";
+import { request, response } from "express";
 
 //REGISTER USER
 export const registerUser = asyncHandler(async (request, response) => {
@@ -121,4 +122,40 @@ export const logoutUser = asyncHandler(async (request, response) => {
   response.status(201).json({
     message: "User logged out successfully!!",
   });
+});
+
+//GET USER (To display the user profile)
+export const getUser = asyncHandler(async (request, response) => {
+  const user = await User.findById(request.user._id).select("-password");
+
+  if (user) {
+    response.status(200).json(user);
+  } else {
+    response.status(400).json({ message: "User not found" });
+  }
+});
+
+//UPDATE USER
+export const updateUser = asyncHandler(async (request, response) => {
+  const user = await User.findById(request.user._id);
+
+  if (user) {
+    const { name, bio } = request.body;
+    user.name = request.body.name || user.name;
+    user.bio = request.body.bio || user.bio;
+
+    const updatedUser = await user.save();
+
+    response.status(200).json({
+      message: "User updated successfully!!",
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      bio: updatedUser.bio,
+      isVerified: updatedUser.isVerified,
+    });
+  } else {
+    response.status(404).json({ message: "User not found!!" });
+  }
 });
