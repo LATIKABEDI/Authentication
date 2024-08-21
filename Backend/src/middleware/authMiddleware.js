@@ -27,3 +27,18 @@ export const protect = asyncHandler(async (request, response, next) => {
     response.status(401).json({ message: "Not authorized, token failed!!" });
   }
 });
+
+//Admin middleware
+export const adminMiddleware = asyncHandler(async (request, response, next) => {
+  if (request.user && request.user.role === "admin") {
+    next();
+    return;
+  } else {
+    response
+      .status(403)
+      .json({
+        message:
+          "Not authorized as an admin!! Only admins can perform this action!!",
+      });
+  }
+});
