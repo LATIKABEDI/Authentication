@@ -5,9 +5,17 @@ import {
   logoutUser,
   getUser,
   updateUser,
+  userLoginStatus,
 } from "../controllers/auth/userController.js";
-import { deleteUser } from "../controllers/auth/adminController.js";
-import { protect, adminMiddleware } from "../middleware/authMiddleware.js";
+import {
+  deleteUser,
+  getAllUsers,
+} from "../controllers/auth/adminController.js";
+import {
+  protect,
+  adminMiddleware,
+  creatorMiddleware,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -20,7 +28,9 @@ router.patch("/user", protect, updateUser);
 //"Protect" in the above route is a middleware helps us to access the user, which is used in "getUser" method
 
 //Admin routes
-router.delete("/admin/users/:id", protect, adminMiddleware, deleteUser);
+router.delete("/admin/user/:id", protect, adminMiddleware, deleteUser);
+router.get("/admin/users", protect, creatorMiddleware, getAllUsers);
 //"adminMiddleware" will allow to delete the user only if it's an admin
+router.get("/login-status", userLoginStatus);
 
 export default router;
