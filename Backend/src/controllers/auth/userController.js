@@ -1,8 +1,12 @@
 import asyncHandler from "express-async-handler";
 import User from "../../models/auth/userModel.js";
-import generateToken from "../../helpers/generateToke.js";
+import generateToken from "../../helpers/generateToken.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import Token from "../../models/auth/token.js";
+import crypto from "node:crypto"; //It means that crypto is coming from node
+import hashToken from "../../helpers/hashToken.js";
+import sendEmail from "../../helpers/sendEmail.js";
 
 //REGISTER USER
 export const registerUser = asyncHandler(async (request, response) => {
@@ -174,3 +178,66 @@ export const userLoginStatus = asyncHandler(async (request, response) => {
     res.status(401).json(false);
   }
 });
+
+//EMAIL VERIFICATION
+export const verifyEmail = asyncHandler(async (request, response) => {
+  const user = await User.findById(request.user._id);
+  if (!user) {
+    return response.status(401).json({ message: "User not found" });
+  }
+  if (user.isVerified) {
+    return response.status(404).json({ message: "User is already verified" });
+  }
+
+  let token = await Token.findOne({ userId: user._id });
+
+  //If a token already exists, delete that token and generate a new verification token for the user using the crypto module coming from node.js
+  if (token) {
+    await token.deleteOne();
+  }
+  const verificationToken = crypto.randomBytes(64).toString("hex") + user._id;
+
+  const hashedToken = hashToken(verificationToken);
+
+  await new Token({
+    userId: user._id,
+    verificationToken: hashedToken,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+  }).save();
+
+  //verification email
+  const verificationLink = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+
+  const subject = "Email verification";
+  const sendTo = user.email;
+  const replyTo = "noreply@gmail.com";
+  const template = "emailVerification";
+  const sendFrom = process.env.USER_EMAIL;
+  const name = user.name;
+  const url = verificationLink;
+
+  try {
+    await sendEmail(subject, sendTo, sendFrom, replyTo, template, name, url); //The order of parameters matters. It should always be this
+    response.status(200).json({ message: "Email sent successfully!!" });
+  } catch (error) {
+    console.log("Error sending the email....");
+    response.status(500).json({ message: "Email could not be sent!!" });
+  }
+});
+
+//VERIFY USER
+// export const verifyUser = asyncHandler(async (request, response) => {
+//   const { verificationToken } = request.params;
+//   if (!verificationToken) {
+//     return response
+//       .status(400)
+//       .json({ message: "Invalid verification token!!" });
+//   }
+//   const hashedToken = hashToken(verificationToken);
+//   const userToken = await Token.findOne({
+//     verificationToken: hashedToken,
+//     expiresAt: { $gt: Date.now() },
+//   });
+//   console.log(userToken);
+// });

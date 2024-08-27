@@ -34,6 +34,7 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
 
+    //This will be used mainly for the first time when the user will register himself
     isVerified: {
       type: Boolean,
       default: false,

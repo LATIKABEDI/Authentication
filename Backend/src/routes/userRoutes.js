@@ -6,6 +6,8 @@ import {
   getUser,
   updateUser,
   userLoginStatus,
+  verifyEmail,
+  // verifyUser,
 } from "../controllers/auth/userController.js";
 import {
   deleteUser,
@@ -32,5 +34,8 @@ router.delete("/admin/user/:id", protect, adminMiddleware, deleteUser);
 router.get("/admin/users", protect, creatorMiddleware, getAllUsers);
 //"adminMiddleware" will allow to delete the user only if it's an admin
 router.get("/login-status", userLoginStatus);
+
+router.post("/verify-email", protect, verifyEmail);
+// router.post("/verify-user/:verificationToken", verifyUser);
 
 export default router;
